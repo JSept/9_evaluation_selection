@@ -5,7 +5,7 @@ import click
 import mlflow
 import mlflow.sklearn
 from sklearn.metrics import accuracy_score
-from sklearn.metrics import silhouette_score
+from sklearn.metrics import f1_score
 
 from .data import get_dataset
 from .pipeline import create_pipeline
@@ -46,7 +46,7 @@ from .pipeline import create_pipeline
 )
 @click.option(
     "--max-iter",
-    default=100,
+    default=1000,
     type=int,
     show_default=True,
 )
@@ -74,13 +74,13 @@ def train(
         pipeline = create_pipeline(use_scaler, max_iter, logreg_c, random_state)
         pipeline.fit(features_train, target_train)
         accuracy = accuracy_score(target_val, pipeline.predict(features_val))
-        silhouette = silhouette_score(features_val, pipeline.predict(features_val))
+        f1_s = f1_score(target_val, pipeline.predict(features_val), average="macro")
         mlflow.log_param("use_scaler", use_scaler)
         mlflow.log_param("max_iter", max_iter)
         mlflow.log_param("logreg_c", logreg_c)
         mlflow.log_metric("accuracy", accuracy)
-        mlflow.log_metric("silhouette", silhouette)
+        mlflow.log_metric("f1_score", f1_s)
         click.echo(f"Accuracy: {accuracy}.")
-        click.echo(f"Silhouette: {silhouette}.")
+        click.echo(f"f1_score: {f1_s}.")
         dump(pipeline, save_model_path)
         click.echo(f"Model is saved to {save_model_path}.")

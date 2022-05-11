@@ -47,7 +47,7 @@ from .pipeline import create_pipeline
 )
 @click.option(
     "--max-iter",
-    default=1000,
+    default=5000,
     type=int,
     show_default=True,
 )
@@ -55,6 +55,12 @@ from .pipeline import create_pipeline
     "--logreg-c",
     default=1.0,
     type=float,
+    show_default=True,
+)
+@click.option(
+    "--regression",
+    default="logreg",
+    type=str,
     show_default=True,
 )
 def train(
@@ -65,6 +71,7 @@ def train(
     use_scaler: bool,
     max_iter: int,
     logreg_c: float,
+    regression: str,
 ) -> None:
     features_train, features_val, target_train, target_val = get_dataset(
         dataset_path,
@@ -72,7 +79,7 @@ def train(
         test_split_ratio,
     )
     with mlflow.start_run():
-        pipeline = create_pipeline(use_scaler, max_iter, logreg_c, random_state)
+        pipeline = create_pipeline(regression, use_scaler, max_iter, logreg_c, random_state)
         pipeline.fit(features_train, target_train)
         accuracy = accuracy_score(target_val, pipeline.predict(features_val))
         f1_s = f1_score(target_val, pipeline.predict(features_val), average="macro")
@@ -80,6 +87,7 @@ def train(
         mlflow.log_param("use_scaler", use_scaler)
         mlflow.log_param("max_iter", max_iter)
         mlflow.log_param("logreg_c", logreg_c)
+        mlflow.log_param("regression", regression)
         mlflow.log_metric("accuracy", accuracy)
         mlflow.log_metric("f1_score", f1_s)
         mlflow.log_metric("roc_auc_score", r_a_score)
